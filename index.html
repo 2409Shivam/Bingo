@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#6c4cf1">
+  <title>Fun Friday Bingo 🎉</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="confetti-bg" aria-hidden="true">✦　✹　✦　✧　✦　✹　✧</div>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="brand-icon">🎉</span><span>FUN FRIDAY <b>BINGO</b></span></a>
+    <div id="connection" class="connection"><span class="dot"></span> Not connected</div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">THE OFFICE PARTY GAME</div>
+      <h1>Ready, set, <span>BINGO!</span></h1>
+      <p>Pick your numbers. Watch the calls. Claim the glory.</p>
+    </section>
+
+    <section id="setupPanel" class="panel setup-panel">
+      <div class="panel-heading"><div><span class="step">01</span><h2>Join the party</h2></div><span class="pill">MULTIPLAYER</span></div>
+      <div class="form-grid">
+        <label>Your display name<input id="nameInput" maxlength="24" placeholder="e.g. Shivam" autocomplete="nickname"></label>
+        <label>Room code<input id="roomInput" maxlength="8" placeholder="e.g. FRIDAY" autocapitalize="characters"></label>
+      </div>
+      <div class="actions">
+        <button id="createBtn" class="btn btn-primary">✨ Create a room</button>
+        <button id="joinBtn" class="btn btn-secondary">Join room</button>
+      </div>
+      <p class="helper">The first player to create a room becomes the host. Share the room code with your colleagues.</p>
+      <div id="setupError" class="error" role="alert"></div>
+    </section>
+
+    <section id="gamePanel" class="hidden">
+      <div class="room-banner panel">
+        <div><span class="eyebrow">YOUR ROOM</span><div class="room-code-line"><strong id="roomCodeLabel">—</strong><button id="copyRoomBtn" class="copy-btn">Copy code</button></div></div>
+        <div class="room-meta"><span id="phasePill" class="pill">LOBBY</span><span id="hostLabel">Host: —</span></div>
+      </div>
+
+      <div class="game-layout">
+        <div class="main-column">
+          <section id="lobbyPanel" class="panel">
+            <div class="panel-heading"><div><span class="step">02</span><h2>Your bingo card</h2></div><span id="readyCount" class="pill">0/0 READY</span></div>
+            <p class="section-copy">Arrange the numbers 1–25 however you like. Every number must appear exactly once.</p>
+            <div class="bingo-headings"><span>B</span><span>I</span><span>N</span><span>G</span><span>O</span></div>
+            <div id="editorGrid" class="bingo-grid editor-grid" aria-label="Edit your bingo card"></div>
+            <div class="actions card-actions">
+              <button id="shuffleBtn" class="btn btn-secondary">🔀 Shuffle numbers</button>
+              <button id="readyBtn" class="btn btn-primary">I'm ready ✓</button>
+            </div>
+            <p id="cardMessage" class="helper">Tip: click any square to edit it. Use each number from 1 to 25 once.</p>
+            <div id="hostControls" class="host-controls hidden">
+              <div><h3>Host controls</h3><p id="readinessText">Waiting for players…</p></div>
+              <button id="startBtn" class="btn btn-start" disabled>🚀 Start game</button>
+            </div>
+            <div class="players-box"><h3>Players <span id="playerCount">0</span></h3><div id="playerList" class="player-list"></div></div>
+          </section>
+
+          <section id="playPanel" class="panel hidden">
+            <div class="panel-heading"><div><span class="step">03</span><h2>It's game time!</h2></div><span id="callsCount" class="pill">0 / 25 CALLED</span></div>
+            <div class="current-call"><div><span class="eyebrow">NOW CALLING</span><div id="currentNumber" class="call-number">—</div></div><div class="call-note"><span class="live-dot"></span> Live for everyone<p>Mark the called numbers on your card.</p></div></div>
+            <div class="bingo-headings"><span>B</span><span>I</span><span>N</span><span>G</span><span>O</span></div>
+            <div id="playGrid" class="bingo-grid play-grid" aria-label="Your bingo card"></div>
+            <div class="progress-wrap"><div class="progress-label"><span>Your completed lines</span><strong id="lineCount">0 / 5</strong></div><div class="progress-track"><div id="lineProgress" class="progress-fill"></div></div></div>
+            <div class="claim-row"><div><strong>Got five lines?</strong><p>Rows, columns or diagonals count.</p></div><button id="bingoBtn" class="btn btn-bingo" disabled>🏆 BINGO!</button></div>
+            <div class="called-section"><h3>Called numbers</h3><div id="calledNumbers" class="called-numbers"></div></div>
+          </section>
+
+          <section id="resultsPanel" class="panel hidden">
+            <div class="panel-heading"><div><span class="step">04</span><h2>That's a wrap!</h2></div><span class="pill">FINAL RESULTS</span></div>
+            <div class="winner-banner"><div class="trophy">🏆</div><h2 id="winnerTitle">BINGO!</h2><p id="winnerSubtitle">The winner is…</p></div>
+            <div id="podium" class="podium"></div>
+            <div class="leaderboard-wrap"><h3>Full leaderboard</h3><div id="leaderboard" class="leaderboard"></div></div>
+            <div id="restartControls" class="actions hidden"><button id="restartBtn" class="btn btn-primary">🔁 New round</button></div>
+          </section>
+        </div>
+
+        <aside class="side-column">
+          <section class="panel status-panel"><div class="panel-heading"><h2>Players</h2><span class="avatar-stack">👥</span></div><div id="sidePlayers" class="side-players"></div></section>
+          <section class="panel rules-panel"><div class="panel-heading"><h2>Quick rules</h2><span>📣</span></div><ol><li>Numbers 1–25 appear once on your card.</li><li>Numbers are called automatically every 3 seconds.</li><li>Tap a called number to mark it.</li><li>Complete five rows, columns or diagonals.</li><li>Hit <b>BINGO!</b> to claim your place.</li></ol><div class="mini-note">Be quick, be kind, have fun! 🎈</div></section>
+          <section class="panel host-note"><div class="host-badge">👑</div><div><strong>Room host</strong><p>The host's tab needs to stay open during the automatic number calls.</p></div></section>
+        </aside>
+      </div>
+      <div class="footer-actions"><button id="leaveBtn" class="text-btn">Leave room</button><span>Made for Fun Friday ✨</span></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
