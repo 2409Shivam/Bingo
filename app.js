@@ -191,19 +191,40 @@ state.countdownUiInterval = setInterval(updateCountdownLabel, 250);
   const previousRoom = state.room;
   state.room = snap.val();
 
+  // Play a sound when a new number is called.
   if (previousRoom?.phase === "playing") {
     const oldCount = (previousRoom.called || []).length;
     const newCount = (state.room.called || []).length;
 
-    if (newCount > oldCount) playCallSound();
+    if (newCount > oldCount) {
+      playCallSound();
+    }
 
+    // Play the victory sound when the game finishes.
     if (
       state.room.phase === "finished" &&
       state.room.winnerUid
     ) {
       playBingoSound();
     }
-  },err=>showToast("Realtime sync error: "+err.message));
+  }
+
+  const p = me();
+  if (p) {
+    state.card = [...p.card];
+    state.ready = !!p.ready;
+  }
+
+  render();
+
+  if (state.room.phase === "playing" && isOwner()) {
+    startAutoCaller();
+  } else {
+    stopAutoCaller();
+  }
+}, err => {
+  showToast("Realtime sync error: " + err.message);
+});
 }
 function render(){
   const room=state.room;if(!room)return;
