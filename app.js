@@ -139,7 +139,10 @@ function render(){
   if(phase==="finished"){hidePanel("lobbyPanel");hidePanel("playPanel");showPanel("resultsPanel");renderResults();}
 }
 function renderEditor(){
-  const grid=$("editorGrid");const card=me()?.card||state.card;
+  const grid=$("editorGrid");
+  const card = state.card.length === 25
+    ? [...state.card]
+    : (me()?.card || []);
   if(grid.children.length===25 && [...grid.children].every((el,i)=>Number(el.value)===Number(card[i])))return;
   grid.innerHTML="";
   card.forEach((num,i)=>{
