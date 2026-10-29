@@ -62,11 +62,27 @@
 
           <section id="playPanel" class="panel hidden">
             <div class="panel-heading"><div><span class="step">03</span><h2>It's game time!</h2></div><span id="callsCount" class="pill">0 / 25 CALLED</span></div>
-            <div class="current-call"><div><span class="eyebrow">NOW CALLING</span><div id="currentNumber" class="call-number">—</div></div><div class="call-note"><span class="live-dot"></span> Live for everyone<p>Mark the called numbers on your card.</p></div></div>
+            <div class="current-call">
+              <div>
+              <span class="eyebrow">NOW CALLING</span>
+              <div id="currentNumber" class="call-number">—</div>
+              </div>
+              <div class="call-note">
+              <span class="live-dot"></span> Live for everyone
+              <p id="callCountdown">Next number in 3s</p>
+              <p>Mark the called numbers on your card.</p>
+              </div>
+            </div>
             <div class="bingo-headings"><span>B</span><span>I</span><span>N</span><span>G</span><span>O</span></div>
             <div id="playGrid" class="bingo-grid play-grid" aria-label="Your bingo card"></div>
             <div class="progress-wrap"><div class="progress-label"><span>Your completed lines</span><strong id="lineCount">0 / 5</strong></div><div class="progress-track"><div id="lineProgress" class="progress-fill"></div></div></div>
-            <div class="claim-row"><div><strong>Got five lines?</strong><p>Rows, columns or diagonals count.</p></div><button id="bingoBtn" class="btn btn-bingo" disabled>🏆 BINGO!</button></div>
+            <div class="claim-row">
+              <div>
+                <strong id="bingoPromptTitle">Got five lines?</strong>
+                <p id="bingoPromptText">Complete five rows, columns or diagonals to unlock your win!</p>
+              </div>
+              <button id="bingoBtn" class="btn btn-bingo" disabled>🏆 BINGO!</button>
+              </div>
             <div class="called-section"><h3>Called numbers</h3><div id="calledNumbers" class="called-numbers"></div></div>
           </section>
 
