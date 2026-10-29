@@ -8,13 +8,13 @@ import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/1
   Database rules are intentionally simple for easy setup; see README for limitations.
 */
 const firebaseConfig = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://PASTE_DATABASE_NAME-default-rtdb.firebaseio.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyAQMk7zcAZ4NX7HUFJwFJ1uGPpd-DVWSC0",
+  authDomain: "fun-friday-bingo-shivam.firebaseapp.com",
+  databaseURL: "https://fun-friday-bingo-shivam-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "fun-friday-bingo-shivam",
+  storageBucket: "fun-friday-bingo-shivam.firebasestorage.app",
+  messagingSenderId: "372587985239",
+  appId: "1:372587985239:web:b25146f543dc2c1fdee612"
 };
 
 const $ = (id) => document.getElementById(id);
