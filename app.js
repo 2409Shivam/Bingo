@@ -105,6 +105,11 @@ function enterRoom(code){
   $("roomCodeLabel").textContent=code;
   history.replaceState(null,"",roomUrl());
   if(state.unsub)state.unsub();
+  if (state.countdownUiInterval) {
+  clearInterval(state.countdownUiInterval);
+}
+
+state.countdownUiInterval = setInterval(updateCountdownLabel, 250);
   state.unsub=onValue(roomRef(),snap=>{
     if(!snap.exists()){showToast("This room no longer exists.");leaveRoom(false);return;}
     state.room=snap.val();
@@ -202,6 +207,28 @@ function startAutoCaller(){
   },3000);
 }
 function stopAutoCaller(){if(state.interval){clearInterval(state.interval);state.interval=null;}}
+function updateCountdownLabel() {
+  const label = $("callCountdown");
+  if (!label || !state.room) return;
+
+  const room = state.room;
+
+  if (room.phase !== "playing") {
+    label.textContent = "Waiting for the game...";
+    return;
+  }
+
+  if ((room.called || []).length >= 25) {
+    label.textContent = "All numbers have been called!";
+    return;
+  }
+
+  const lastCall = room.lastCallAt || room.startedAt || Date.now();
+  const elapsed = Math.max(0, Date.now() - lastCall);
+  const remaining = 3 - Math.floor(elapsed / 1000) % 3;
+
+  label.textContent = `⏳ Next number in ${remaining}s`;
+}
 function renderPlay(){
   const room=state.room,p=me();if(!p)return;
   const called=room.called||[],marked=new Set(p.marked||[]);
@@ -217,9 +244,27 @@ function renderPlay(){
     btn.addEventListener("click",()=>markNumber(Number(num)));
     grid.append(btn);
   });
-  const lines=linesCompleted(p.card,p.marked||[]);
-  $("lineCount").textContent=`${lines} / 5`;$("lineProgress").style.width=`${Math.min(lines,5)*20}%`;
-  $("bingoBtn").disabled=lines<5||!!p.claimAt||phaseEnded(room);
+  const lines = linesCompleted(p.card, p.marked || []);
+const eligible = lines >= 5 && !p.claimAt && !phaseEnded(room);
+
+$("lineCount").textContent = `${lines} / 5`;
+$("lineProgress").style.width = `${Math.min(lines, 5) * 20}%`;
+
+$("bingoPromptTitle").textContent = eligible
+  ? "🎉 You have completed five lines!"
+  : "Got five lines?";
+
+$("bingoPromptText").textContent = eligible
+  ? "Press BINGO now to claim your win!"
+  : lines >= 5
+    ? "Your Bingo claim has already been submitted."
+    : `Complete ${5 - lines} more line${5 - lines === 1 ? "" : "s"} to unlock BINGO!`;
+
+$("bingoBtn").disabled = !eligible;
+$("bingoBtn").textContent = eligible
+  ? "🎉 PRESS BINGO!"
+  : "🏆 BINGO!";
+$("bingoBtn").classList.toggle("bingo-ready", eligible);
   $("calledNumbers").innerHTML=called.map((n,i)=>`<span class="number-chip ${i===called.length-1?"latest":""}">${n}</span>`).join("");
 }
 function phaseEnded(room){return room.phase!=="playing"||!!room.winnerUid;}
