@@ -135,8 +135,12 @@ function render(){
   $("readyBtn").disabled=phase!=="lobby";
   $("editorGrid").querySelectorAll("input").forEach(input=>input.disabled=phase!=="lobby"||state.ready);
   $("readinessText").textContent=players.filter(p=>!p.ready).length?`Waiting for: ${players.filter(p=>!p.ready).map(p=>p.name).join(", ")}`:"Everyone is ready! Start the party.";
-  $("startBtn").disabled=players.length<1||!players.every(p=>p.ready)||phase!=="lobby";
-  $("startBtn").title=players.every(p=>p.ready)?"All players ready":"Waiting for everyone to click Ready";
+  $("startBtn").disabled = players.length < 2 || phase !== "lobby";
+  $("startBtn").title = players.length < 2
+  ? "At least 2 players must join"
+  : players.every(p => p.ready)
+    ? "Everyone is ready — start the game"
+    : "Some players are not ready — you can start anyway";
   $("playerList").innerHTML=players.map(p=>`<div class="player-item"><div class="player-avatar">${escapeText(p.avatar||"🎈")}</div><div><div class="player-name">${escapeText(p.name)}${p.uid===room.ownerUid?' 👑':''}</div><span class="player-state ${p.ready?"ready":""} ${p.uid===room.ownerUid?"owner":""}">${p.uid===room.ownerUid?"HOST":playerStatus(p).toUpperCase()}</span></div></div>`).join("");
   $("sidePlayers").innerHTML=players.map(p=>`<div class="side-player"><span>${escapeText(p.avatar||"🎈")} ${escapeText(p.name)}${p.uid===room.ownerUid?" 👑":""}</span><span class="status-tag ${p.ready?"ready":""}">${phase==="lobby"?playerStatus(p):p.uid===room.winnerUid?"WINNER":`${linesCompleted(p.card,p.marked||[])}/5 lines`}</span></div>`).join("");
   if(phase==="lobby"){showPanel("lobbyPanel");hidePanel("playPanel");hidePanel("resultsPanel");renderEditor();}
@@ -174,18 +178,64 @@ async function saveCardAndReady(){
     showToast("You're in! Good luck 🍀");
   }catch(e){showToast("Couldn't update ready status: "+e.message);}
 }
-async function startGame(){
-  if(!isOwner())return;
-  const room=state.room,players=Object.values(room.players||{});
-  if(!players.length||!players.every(p=>p.ready)){showToast("Everyone must be ready first.");return;}
-  try{
-    await runTransaction(roomRef(),current=>{
-      if(!current||current.ownerUid!==state.uid||current.phase!=="lobby")return;
-      const ps=Object.values(current.players||{});
-      if(!ps.length||!ps.every(p=>p.ready&&validateCard(p.card)))return;
-      return {...current,phase:"playing",called:[],callIndex:0,startedAt:Date.now(),winnerUid:null,claims:{}};
+async function startGame() {
+  if (!isOwner()) return;
+
+  const room = state.room;
+  if (!room || room.phase !== "lobby") return;
+
+  const players = Object.values(room.players || {});
+
+  if (players.length < 2) {
+    showToast("At least 2 players must join before starting.");
+    return;
+  }
+
+  const notReady = players.filter(p => !p.ready);
+
+  if (notReady.length > 0) {
+    const names = notReady.map(p => p.name).join(", ");
+
+    const proceed = window.confirm(
+      `${notReady.length} player(s) are not ready: ${names}.\n\n` +
+      "Start the game anyway?\n\n" +
+      "Click OK to start, or Cancel to wait."
+    );
+
+    if (!proceed) return;
+  }
+
+  try {
+    const result = await runTransaction(roomRef(), current => {
+      if (
+        !current ||
+        current.ownerUid !== state.uid ||
+        current.phase !== "lobby"
+      ) return;
+
+      const ps = Object.values(current.players || {});
+
+      if (ps.length < 2 || !ps.every(p => validateCard(p.card))) {
+        return;
+      }
+
+      return {
+        ...current,
+        phase: "playing",
+        called: [],
+        callIndex: 0,
+        startedAt: Date.now(),
+        winnerUid: null,
+        claims: {}
+      };
     });
-  }catch(e){showToast("Couldn't start the game: "+e.message);}
+
+    if (!result.committed) {
+      showToast("Could not start. Check the player count and cards.");
+    }
+  } catch (e) {
+    showToast("Couldn't start the game: " + e.message);
+  }
 }
 function startAutoCaller(){
   if(state.interval||state.room?.phase!=="playing"||!isOwner())return;
