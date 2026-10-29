@@ -30,6 +30,77 @@ function normalizeCode(s){return s.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")
 function escapeText(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function isOwner(){return !!state.room && state.room.ownerUid===state.uid;}
 function me(){return state.room?.players?.[state.uid]||null;}
+
+let audioContext = null;
+
+function playNotes(notes) {
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio) return;
+
+    if (!audioContext) audioContext = new Audio();
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    const now = audioContext.currentTime;
+
+    notes.forEach(({ freq, start, duration, volume = 0.06, type = "sine" }) => {
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const at = now + start;
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, at);
+
+      gain.gain.setValueAtTime(0.001, at);
+      gain.gain.linearRampToValueAtTime(volume, at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, at + duration);
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(at);
+      oscillator.stop(at + duration + 0.03);
+    });
+  } catch (error) {
+    console.warn("Audio unavailable:", error);
+  }
+}
+
+function playCallSound() {
+  playNotes([
+    { freq: 880, start: 0, duration: 0.12, volume: 0.045 },
+    { freq: 1175, start: 0.07, duration: 0.16, volume: 0.035 }
+  ]);
+}
+
+function playMarkSound() {
+  playNotes([
+    { freq: 660, start: 0, duration: 0.07, volume: 0.025, type: "triangle" }
+  ]);
+}
+
+function playBingoSound() {
+  playNotes([
+    { freq: 523.25, start: 0, duration: 0.22 },
+    { freq: 659.25, start: 0.16, duration: 0.22 },
+    { freq: 783.99, start: 0.32, duration: 0.22 },
+    { freq: 1046.5, start: 0.50, duration: 0.55, volume: 0.08 }
+  ]);
+}
+
+// Let the browser initialize audio after the player's first interaction.
+document.addEventListener("pointerdown", () => {
+  try {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (Audio && !audioContext) audioContext = new Audio();
+    if (audioContext?.state === "suspended") audioContext.resume();
+  } catch (error) {
+    console.warn("Audio initialization failed:", error);
+  }
+}, { once: true });
+
 function showToast(message){$("toast").textContent=message;$("toast").classList.add("show");clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>$("toast").classList.remove("show"),2600);}
 function setError(message){$("setupError").textContent=message||"";}
 function setConnection(text,online=false){$("connection").innerHTML=`<span class="dot"></span>${escapeText(text)}`;$("connection").classList.toggle("online",online);}
@@ -110,13 +181,28 @@ function enterRoom(code){
 }
 
 state.countdownUiInterval = setInterval(updateCountdownLabel, 250);
-  state.unsub=onValue(roomRef(),snap=>{
-    if(!snap.exists()){showToast("This room no longer exists.");leaveRoom(false);return;}
-    state.room=snap.val();
-    const p=me();if(p){state.card=[...p.card];state.ready=!!p.ready;}
-    render();
-    if(state.room.phase==="playing"&&isOwner())startAutoCaller();
-    else stopAutoCaller();
+  state.unsub = onValue(roomRef(), snap => {
+  if (!snap.exists()) {
+    showToast("This room no longer exists.");
+    leaveRoom(false);
+    return;
+  }
+
+  const previousRoom = state.room;
+  state.room = snap.val();
+
+  if (previousRoom?.phase === "playing") {
+    const oldCount = (previousRoom.called || []).length;
+    const newCount = (state.room.called || []).length;
+
+    if (newCount > oldCount) playCallSound();
+
+    if (
+      state.room.phase === "finished" &&
+      state.room.winnerUid
+    ) {
+      playBingoSound();
+    }
   },err=>showToast("Realtime sync error: "+err.message));
 }
 function render(){
@@ -322,7 +408,13 @@ async function markNumber(num){
   const p=me(),room=state.room;if(!p||room.phase!=="playing")return;
   if(!(room.called||[]).includes(num)){showToast("That number hasn't been called yet.");return;}
   if((p.marked||[]).includes(num))return;
-  try{await update(ref(state.db,`rooms/${state.roomCode}/players/${state.uid}`),{marked:[...(p.marked||[]),num]});}
+  try {
+  await update(
+    ref(state.db, `rooms/${state.roomCode}/players/${state.uid}`),
+    { marked: [...(p.marked || []), num] }
+  );
+  playMarkSound();
+}
   catch(e){showToast("Couldn't mark number: "+e.message);}
 }
 async function claimBingo(){
